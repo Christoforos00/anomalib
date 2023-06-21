@@ -18,6 +18,7 @@ from anomalib.models.cflow import Cflow
 from anomalib.models.components import AnomalyModule
 from anomalib.models.csflow import Csflow
 from anomalib.models.dfkde import Dfkde
+from anomalib.models.dfkde_ast import DfkdeAst
 from anomalib.models.dfm import Dfm
 from anomalib.models.draem import Draem
 from anomalib.models.efficientad import EfficientAD
@@ -34,6 +35,7 @@ __all__ = [
     "Cflow",
     "Csflow",
     "Dfkde",
+    "DfkdeAst",
     "Dfm",
     "Draem",
     "Fastflow",
@@ -87,6 +89,7 @@ def get_model(config: DictConfig | ListConfig) -> AnomalyModule:
         "cflow",
         "csflow",
         "dfkde",
+        "dfkde_ast",
         "dfm",
         "draem",
         "fastflow",
