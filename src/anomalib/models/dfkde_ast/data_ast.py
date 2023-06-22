@@ -95,9 +95,21 @@ class CustomDataModule(LightningDataModule):
 
         test_files = labels_df[labels_df["is_annotated"] == 1]["names"].tolist()
         train_files = [file for file in labels_df["names"].tolist() if file not in test_files]
-        idx = int(len(train_files) * 0.75)
-        val_files = train_files[idx:]
-        train_files = train_files[:idx]
+
+        whoop_files = []
+        blank_files = []
+
+        for file in train_files:
+            if file_2_label[file]:
+                blank_files.append(file)
+            else:
+                whoop_files.append(file)
+
+        idx = int(len(train_files) * 0.5)
+        train_files = whoop_files[:idx]
+        val_files = blank_files
+        val_files.extend(whoop_files[idx:])
+
 
         self.train_data = PickleDataset(self.data_dir, file_2_label, files_list=train_files)
         self.val_data = PickleDataset(self.data_dir, file_2_label, files_list=val_files)
