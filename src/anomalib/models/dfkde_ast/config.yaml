@@ -1,15 +1,15 @@
 dataset:
-  name: mvtec
+  name: whoopings
   format: mvtec
-  path: ./datasets/MVTec
+  path: ./
   category: bottle
   task: classification
   train_batch_size: 32
   eval_batch_size: 32
   num_workers: 8
-  image_size: 256 # dimensions to which images are resized (mandatory)
+  image_size: 0 # dimensions to which images are resized (mandatory)
   center_crop: null # dimensions to which images are center-cropped after resizing (optional)
-  normalization: imagenet # data distribution to which the images will be normalized: [none, imagenet]
+  normalization: none # data distribution to which the images will be normalized: [none, imagenet]
   transform_config:
     train: null
     eval: null
@@ -36,6 +36,7 @@ metrics:
   image:
     - F1Score
     - AUROC
+    - Accuracy
   threshold:
     method: adaptive #options: [adaptive, manual]
     manual_image: null
@@ -82,7 +83,7 @@ trainer:
   limit_predict_batches: 1.0
   val_check_interval: 1.0 # Don't validate before extracting features.
   log_every_n_steps: 50
-  accelerator: auto # <"cpu", "gpu", "tpu", "ipu", "hpu", "auto">
+  accelerator: cpu # <"cpu", "gpu", "tpu", "ipu", "hpu", "auto">
   strategy: null
   sync_batchnorm: false
   precision: 32

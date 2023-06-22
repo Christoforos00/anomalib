@@ -44,7 +44,7 @@ class PickleDataset(LightningDataModule):
         super().__init__()
 
         self.data_dir = data_dir
-        self.files_list = [f for f in os.listdir(self.data_dir) if ".pickle" in f][:55]
+        self.files_list = [f for f in os.listdir(self.data_dir) if ".pickle" in f]
 
         if files_list is not None:
             self.files_list = [file for file in self.files_list if file in files_list]

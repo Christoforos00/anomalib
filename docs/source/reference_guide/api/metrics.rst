@@ -16,6 +16,7 @@ Each subsection in the section ``metrics`` of the config file can have a differe
       image:
          - F1Score
          - AUROC
+         - Accuracy
       # pixelwise metrics using the mapping style
       pixel:
          F1Score:

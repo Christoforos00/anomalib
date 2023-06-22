@@ -1,14 +1,10 @@
-import numpy as np
-from matplotlib import pyplot as plt
+
 from pytorch_lightning import Trainer
 
 from anomalib.config import get_configurable_parameters
-# from anomalib.data.utils import read_image
-# from anomalib.deploy import OpenVINOInferencer
-from anomalib.models import get_model
-from anomalib.utils.callbacks import get_callbacks
 
-from transformers import AutoProcessor, ASTModel
+from anomalib.models import get_model
+from anomalib.utils.callbacks import LoadModelCallback, get_callbacks
 
 
 def fit():
@@ -30,8 +26,7 @@ def fit():
     labels_dir = "/Users/christof/Documents/papers/sound/annotation 30_seconds_split.csv"
     datamodule = CustomDataModule(32, data_dir, labels_dir)
 
-    # from torch_model import Dfkde_astModel
-    # # Get the model and callbacks
+    # Get the model and callbacks
     model = get_model(config)
     callbacks = get_callbacks(config)
     # model = DfkdeModel()
@@ -39,7 +34,21 @@ def fit():
     # start training
     trainer = Trainer(**config.trainer, callbacks=callbacks)
     trainer.fit(model=model, datamodule=datamodule)
+    test_results1 = trainer.test(model=model, datamodule=datamodule)
+    print(trainer.checkpoint_callback.best_model_path)
+    print(test_results1)
 
+    # load saved model
+    # trainer2 = None
+    # output_path = Path(config["project"]["path"])
+    # model_path = output_path / "weights" / "lightning" / "model.ckpt"
+    # # config.trainer.accumulate_grad_batches = 0
+    # model = get_model(config)
+    # callbacks = get_callbacks(config)
+    # trainer2 = Trainer(**config.trainer, callbacks=callbacks)
+    # load_model_callback = LoadModelCallback(weights_path=model_path)
+    # trainer2.callbacks.insert(0, load_model_callback)
+    # test_results2 = trainer2.test(model=model, datamodule=datamodule)
 
 if __name__ == '__main__':
     fit()

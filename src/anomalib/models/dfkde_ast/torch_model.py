@@ -8,10 +8,8 @@ from __future__ import annotations
 import logging
 
 import torch
-import torch.nn.functional as F
 from torch import Tensor, nn
 
-# from anomalib.models.components import FeatureExtractor
 from anomalib.models.components.classification import (
     FeatureScalingMethod,
     KDEClassifier,
@@ -53,8 +51,8 @@ class DfkdeAstModel(nn.Module):
         self.sampling_rate = sampling_rate
         self.device = get_device()
         self.processor_ = AutoProcessor.from_pretrained("MIT/ast-finetuned-audioset-10-10-0.4593")
-        self.model = ASTModel.from_pretrained("MIT/ast-finetuned-audioset-10-10-0.4593").eval()
-        self.model = self.model.to(self.device)
+        self.feature_extractor = ASTModel.from_pretrained("MIT/ast-finetuned-audioset-10-10-0.4593").eval()
+        self.feature_extractor = self.feature_extractor.to(self.device)
 
         # self.feature_extractor = FeatureExtractor(backbone=backbone, pre_trained=pre_trained, layers=layers).eval()
 
@@ -73,14 +71,14 @@ class DfkdeAstModel(nn.Module):
         Returns:
             Tensor: Tensor containing extracted features.
         """
-        if self.model.device != self.device:
-            self.model.to(self.device)
+        if self.feature_extractor.device != self.device:
+            self.feature_extractor.to(self.device)
 
-        self.model.eval()
+        self.feature_extractor.eval()
         inputs = [self.processor_(data.detach().cpu(), sampling_rate=self.sampling_rate, return_tensors="pt") for data in batch]
         inputs = torch.stack([input["input_values"][0] for input in inputs]).to(self.device)
         with torch.no_grad():
-            outputs = self.model(inputs)
+            outputs = self.feature_extractor(inputs)
         encodings_batch = outputs["pooler_output"]
         return encodings_batch
 
