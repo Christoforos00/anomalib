@@ -17,7 +17,7 @@ from anomalib.models.components.classification import (
 
 from transformers import AutoProcessor, ASTModel
 
-from data_ast import get_device
+from .data_ast import get_device
 
 logger = logging.getLogger(__name__)
 

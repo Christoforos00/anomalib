@@ -15,7 +15,7 @@ from torch import Tensor
 from anomalib.models.components import AnomalyModule
 from anomalib.models.components.classification import FeatureScalingMethod
 
-from torch_model import DfkdeAstModel
+from .torch_model import DfkdeAstModel
 
 logger = logging.getLogger(__name__)
 

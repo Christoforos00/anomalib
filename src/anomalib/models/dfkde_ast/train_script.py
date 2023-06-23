@@ -4,7 +4,7 @@ from pytorch_lightning import Trainer
 from anomalib.config import get_configurable_parameters
 
 from anomalib.models import get_model
-from anomalib.utils.callbacks import LoadModelCallback, get_callbacks
+from anomalib.utils.callbacks import get_callbacks
 
 
 def fit():
@@ -49,6 +49,7 @@ def fit():
     # load_model_callback = LoadModelCallback(weights_path=model_path)
     # trainer2.callbacks.insert(0, load_model_callback)
     # test_results2 = trainer2.test(model=model, datamodule=datamodule)
+
 
 if __name__ == '__main__':
     fit()
