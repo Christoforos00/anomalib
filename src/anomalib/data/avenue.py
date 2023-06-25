@@ -21,7 +21,7 @@ from pathlib import Path
 from shutil import move
 from typing import Callable
 
-import albumentations as A
+# import albumentations as A
 import cv2
 import numpy as np
 import scipy.io
@@ -149,7 +149,7 @@ class AvenueDataset(AnomalibVideoDataset):
         task: TaskType,
         root: Path | str,
         gt_dir: Path | str,
-        transform: A.Compose,
+        transform,
         split: Split,
         clip_length_in_frames: int = 1,
         frames_between_clips: int = 1,
@@ -210,8 +210,8 @@ class Avenue(AnomalibVideoDataModule):
         train_batch_size: int = 32,
         eval_batch_size: int = 32,
         num_workers: int = 8,
-        transform_config_train: str | A.Compose | None = None,
-        transform_config_eval: str | A.Compose | None = None,
+        transform_config_train = None,
+        transform_config_eval = None,
         val_split_mode: ValSplitMode = ValSplitMode.FROM_TEST,
         val_split_ratio: float = 0.5,
         seed: int | None = None,
