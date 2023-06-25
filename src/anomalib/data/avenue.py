@@ -21,8 +21,8 @@ from pathlib import Path
 from shutil import move
 from typing import Callable
 
-# import albumentations as A
-# import cv2
+import albumentations as A
+import cv2
 import numpy as np
 import scipy.io
 from pandas import DataFrame
@@ -122,7 +122,7 @@ class AvenueClipsIndexer(ClipsIndexer):
         if mask_folder.exists():
             mask_frames = sorted(mask_folder.glob("*"))
             mask_paths = [mask_frames[idx] for idx in frames.int()]
-            masks = None #np.stack([cv2.imread(str(mask_path), flags=0) for mask_path in mask_paths])
+            masks = np.stack([cv2.imread(str(mask_path), flags=0) for mask_path in mask_paths])
         else:
             mat = scipy.io.loadmat(matfile)
             masks = np.vstack([np.stack(m) for m in mat["volLabel"]])
@@ -149,7 +149,7 @@ class AvenueDataset(AnomalibVideoDataset):
         task: TaskType,
         root: Path | str,
         gt_dir: Path | str,
-        transform,
+        transform: A.Compose,
         split: Split,
         clip_length_in_frames: int = 1,
         frames_between_clips: int = 1,
@@ -210,8 +210,8 @@ class Avenue(AnomalibVideoDataModule):
         train_batch_size: int = 32,
         eval_batch_size: int = 32,
         num_workers: int = 8,
-        transform_config_train = None,
-        transform_config_eval = None,
+        transform_config_train: str | A.Compose | None = None,
+        transform_config_eval: str | A.Compose | None = None,
         val_split_mode: ValSplitMode = ValSplitMode.FROM_TEST,
         val_split_ratio: float = 0.5,
         seed: int | None = None,
@@ -306,4 +306,4 @@ class Avenue(AnomalibVideoDataModule):
                 masks = mat["volLabel"].squeeze()
                 for idx, mask in enumerate(masks):
                     filename = (mask_folder / str(idx).zfill(int(math.log10(len(masks)) + 1))).with_suffix(".png")
-                    #cv2.imwrite(str(filename), mask)
+                    cv2.imwrite(str(filename), mask)
