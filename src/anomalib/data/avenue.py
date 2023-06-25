@@ -22,7 +22,7 @@ from shutil import move
 from typing import Callable
 
 # import albumentations as A
-import cv2
+# import cv2
 import numpy as np
 import scipy.io
 from pandas import DataFrame
@@ -122,7 +122,7 @@ class AvenueClipsIndexer(ClipsIndexer):
         if mask_folder.exists():
             mask_frames = sorted(mask_folder.glob("*"))
             mask_paths = [mask_frames[idx] for idx in frames.int()]
-            masks = np.stack([cv2.imread(str(mask_path), flags=0) for mask_path in mask_paths])
+            masks = None #np.stack([cv2.imread(str(mask_path), flags=0) for mask_path in mask_paths])
         else:
             mat = scipy.io.loadmat(matfile)
             masks = np.vstack([np.stack(m) for m in mat["volLabel"]])
@@ -306,4 +306,4 @@ class Avenue(AnomalibVideoDataModule):
                 masks = mat["volLabel"].squeeze()
                 for idx, mask in enumerate(masks):
                     filename = (mask_folder / str(idx).zfill(int(math.log10(len(masks)) + 1))).with_suffix(".png")
-                    cv2.imwrite(str(filename), mask)
+                    #cv2.imwrite(str(filename), mask)
