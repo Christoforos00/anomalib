@@ -74,8 +74,10 @@ class CustomDataModule(LightningDataModule):
             labels_dir,
             num_workers: int = 8,
             seed: Optional[int] = 101,
+            limit: int = 20
     ) -> None:
         super().__init__()
+        self.limit = limit
         self.data_dir = data_dir
         self.labels_dir = labels_dir
         self.batch_size = batch_size
@@ -110,9 +112,9 @@ class CustomDataModule(LightningDataModule):
         val_files = blank_files
         val_files.extend(whoop_files[idx:])
 
-        self.train_data = PickleDataset(self.data_dir, file_2_label, files_list=train_files)
-        self.val_data = PickleDataset(self.data_dir, file_2_label, files_list=val_files)
-        self.test_data = PickleDataset(self.data_dir, file_2_label, files_list=test_files)
+        self.train_data = PickleDataset(self.data_dir, file_2_label, files_list=train_files[:self.limit])
+        self.val_data = PickleDataset(self.data_dir, file_2_label, files_list=val_files[:self.limit])
+        self.test_data = PickleDataset(self.data_dir, file_2_label, files_list=test_files[:self.limit])
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         return DataLoader(
