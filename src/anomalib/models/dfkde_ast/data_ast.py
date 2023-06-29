@@ -23,13 +23,6 @@ def get_device():
         return "cpu"
 
 
-def get_true_val(x):
-    if x["is_annotated"] and not x["is_correct"]:
-        return int(not x["preds"])
-    else:
-        return x["preds"]
-
-
 class CPU_Unpickler(pickle.Unpickler):
     def find_class(self, module, name):
         if module == 'torch.storage' and name == '_load_from_bytes':
@@ -90,8 +83,7 @@ class CustomDataModule(LightningDataModule):
 
     def setup(self, stage: Optional[str] = None) -> None:
         labels_df = pd.read_csv(self.labels_dir)
-        labels_df["label"] = labels_df.apply(get_true_val, axis=1)
-        file_2_label = dict(zip(labels_df["names"], labels_df["label"]))
+        file_2_label = dict(zip(labels_df["names"], labels_df["annotation_label"]))
 
         test_files = labels_df[labels_df["is_annotated"] == 1]["names"].tolist()
         train_files = [file for file in labels_df["names"].tolist() if file not in test_files]
