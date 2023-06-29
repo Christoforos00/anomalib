@@ -6,10 +6,10 @@ import torch
 
 import pandas as pd
 
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional
 
 from anomalib.config import get_configurable_parameters
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from pytorch_lightning.core.datamodule import LightningDataModule
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 
@@ -65,6 +65,9 @@ class CustomDataModule(LightningDataModule):
             batch_size,
             data_dir,
             labels_dir,
+            train_files,
+            val_files,
+            test_files,
             num_workers: int = 8,
             seed: Optional[int] = 101,
     ) -> None:
@@ -74,7 +77,9 @@ class CustomDataModule(LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.seed = seed
-
+        self.train_files = train_files
+        self.val_files = val_files
+        self.test_files = test_files
         self.train_data = None
         self.val_data = None
         self.test_data = None
@@ -85,26 +90,9 @@ class CustomDataModule(LightningDataModule):
         labels_df = pd.read_csv(self.labels_dir)
         file_2_label = dict(zip(labels_df["names"], labels_df["annotation_label"]))
 
-        test_files = labels_df[labels_df["is_annotated"] == 1]["names"].tolist()
-        train_files = [file for file in labels_df["names"].tolist() if file not in test_files]
-
-        whoop_files = []
-        blank_files = []
-
-        for file in train_files:
-            if file_2_label[file]:
-                blank_files.append(file)
-            else:
-                whoop_files.append(file)
-
-        idx = int(len(train_files) * 0.5)
-        train_files = whoop_files[:idx]
-        val_files = blank_files
-        val_files.extend(whoop_files[idx:])
-
-        self.train_data = PickleDataset(self.data_dir, file_2_label, files_list=train_files)
-        self.val_data = PickleDataset(self.data_dir, file_2_label, files_list=val_files)
-        self.test_data = PickleDataset(self.data_dir, file_2_label, files_list=test_files)
+        self.train_data = PickleDataset(self.data_dir, file_2_label, files_list=self.train_files)
+        self.val_data = PickleDataset(self.data_dir, file_2_label, files_list=self.val_files)
+        self.test_data = PickleDataset(self.data_dir, file_2_label, files_list=self.test_files)
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         return DataLoader(
