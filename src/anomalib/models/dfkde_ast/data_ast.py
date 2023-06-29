@@ -64,7 +64,7 @@ class CustomDataModule(LightningDataModule):
             self,
             batch_size,
             data_dir,
-            labels_dir,
+            file_2_label,
             train_files,
             val_files,
             test_files,
@@ -73,7 +73,7 @@ class CustomDataModule(LightningDataModule):
     ) -> None:
         super().__init__()
         self.data_dir = data_dir
-        self.labels_dir = labels_dir
+        self.file_2_label = file_2_label
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.seed = seed
@@ -87,12 +87,9 @@ class CustomDataModule(LightningDataModule):
         self.setup()
 
     def setup(self, stage: Optional[str] = None) -> None:
-        labels_df = pd.read_csv(self.labels_dir)
-        file_2_label = dict(zip(labels_df["names"], labels_df["annotation_label"]))
-
-        self.train_data = PickleDataset(self.data_dir, file_2_label, files_list=self.train_files)
-        self.val_data = PickleDataset(self.data_dir, file_2_label, files_list=self.val_files)
-        self.test_data = PickleDataset(self.data_dir, file_2_label, files_list=self.test_files)
+        self.train_data = PickleDataset(self.data_dir, self.file_2_label, files_list=self.train_files)
+        self.val_data = PickleDataset(self.data_dir, self.file_2_label, files_list=self.val_files)
+        self.test_data = PickleDataset(self.data_dir, self.file_2_label, files_list=self.test_files)
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         return DataLoader(
