@@ -5,7 +5,16 @@ from anomalib.config import get_configurable_parameters
 
 from anomalib.models import get_model
 from anomalib.utils.callbacks import get_callbacks
+import pandas as pd
 
+
+def get_annotated_train_df(all_df, test_df):
+    test_names = test_df["names"].tolist()
+    df_train = all_df[~all_df["names"].isin(test_names)]
+    df_train = df_train[df_train["is_annotated"] == 1]
+    df_train_only_blank = df_train[df_train["annotation_label"] == 0]
+    df_train_only_whoop = df_train[df_train["annotation_label"] == 1]
+    return df_train_only_blank, df_train_only_whoop
 
 def fit():
 
@@ -23,13 +32,27 @@ def fit():
     from data_ast import CustomDataModule
 
     data_dir = "/Users/christof/Documents/papers/sound/audio_data_simulation/ast_features/30_seconds_split"
-    labels_dir = "/Users/christof/Documents/papers/sound/annotation 30_seconds_split.csv"
-    datamodule = CustomDataModule(32, data_dir, labels_dir)
+    test_data_file = "/Users/christof/Documents/papers/sound/data/test_set.csv"
+    all_data_file = "/Users/christof/Documents/papers/sound/annotation_30_seconds_split.csv"
 
     # Get the model and callbacks
     model = get_model(config)
     callbacks = get_callbacks(config)
     # model = DfkdeModel()
+
+
+    all_data_df = pd.read_csv(all_data_file)
+    test_data_df = pd.read_csv(test_data_file)
+    df_train_only_blank, df_train_only_whoop = get_annotated_train_df(all_data_df, test_data_df)
+    train_list = df_train_only_blank["names"].tolist()[:200]
+    val_list = df_train_only_blank["names"].tolist()[200:] + df_train_only_whoop["names"].tolist()
+    test_list = test_data_df["names"].tolist()
+    # train_list, val_list, test_list = all_data_df["names"].tolist(), all_data_df["names"].tolist(), all_data_df["names"].tolist()
+
+    file_2_label = dict(zip(all_data_df["names"], all_data_df["annotation_label"]))
+
+    datamodule = CustomDataModule(batch_size=32, data_dir=data_dir, file_2_label=file_2_label, train_files=train_list, val_files=val_list, test_files=test_list)
+
 
     # start training
     trainer = Trainer(**config.trainer, callbacks=callbacks)
