@@ -2,11 +2,15 @@ import io
 import os
 import pickle
 
+import librosa
+import numpy as np
 import torch
 
 import pandas as pd
 
 from typing import Optional
+
+import torchaudio
 
 from anomalib.config import get_configurable_parameters
 from torch.utils.data import DataLoader
@@ -31,6 +35,14 @@ class CPU_Unpickler(pickle.Unpickler):
             return super().find_class(module, name)
 
 
+def resample_if_necessary(signal, sample_rate, target_sample_rate):
+    if sample_rate != target_sample_rate:
+        signal = torch.tensor(signal).to(torch.float)
+        resampler = torchaudio.transforms.Resample(sample_rate, target_sample_rate)
+        signal = resampler(signal).detach().cpu().numpy()
+    return signal
+
+
 class PickleDataset(LightningDataModule):
 
     def __init__(self, data_dir, file_2_label, files_list=None):
@@ -40,7 +52,7 @@ class PickleDataset(LightningDataModule):
         self.files_list = [f for f in os.listdir(self.data_dir) if ".pickle" in f]
 
         if files_list is not None:
-            self.files_list = [file for file in self.files_list if file in files_list]
+            self.files_list = [file for file in files_list if file in self.files_list]
 
         self._len = len(self.files_list)
         self.file_2_label = file_2_label
@@ -58,6 +70,32 @@ class PickleDataset(LightningDataModule):
         return item
 
 
+class SimpleAudioDataset(LightningDataModule):
+    def __init__(self, data_dir, file_2_label, file_seconds=None, target_sample_rate=16000, files_list=None):
+        self.data_dir = data_dir
+        self.sample_size = target_sample_rate * file_seconds if file_seconds else 0
+        self.target_sample_rate = target_sample_rate
+        self.file_2_label = file_2_label
+        self.files_list = [f for f in os.listdir(self.data_dir) if f[0] != "."]
+        if files_list is not None:
+            self.files_list = [file for file in self.files_list if file in files_list]
+        self._len = len(self.files_list)
+
+    def __len__(self):
+        return self._len
+
+    def __getitem__(self, idx: int):
+        filename = self.files_list[idx]
+        audio_sample_path = os.path.join(self.data_dir, filename)
+        y, sr = librosa.load(audio_sample_path, sr=None)
+        y = resample_if_necessary(y, sr, self.target_sample_rate)
+        if self.sample_size:
+            y = np.pad(y, (0, self.sample_size - y.shape[0]), 'constant')
+        label = self.file_2_label[filename]
+        item = {"image": y, "label": label, "file_name": filename}
+        return item
+
+
 class CustomDataModule(LightningDataModule):
 
     def __init__(
@@ -68,6 +106,7 @@ class CustomDataModule(LightningDataModule):
             train_files,
             val_files,
             test_files,
+            raw_audio: bool = False,
             num_workers: int = 8,
             seed: Optional[int] = 101,
     ) -> None:
@@ -80,16 +119,22 @@ class CustomDataModule(LightningDataModule):
         self.train_files = train_files
         self.val_files = val_files
         self.test_files = test_files
+        self.raw_audio = raw_audio
         self.train_data = None
         self.val_data = None
         self.test_data = None
-
-        self.setup()
+        #
+        # self.setup()
 
     def setup(self, stage: Optional[str] = None) -> None:
-        self.train_data = PickleDataset(self.data_dir, self.file_2_label, files_list=self.train_files)
-        self.val_data = PickleDataset(self.data_dir, self.file_2_label, files_list=self.val_files)
-        self.test_data = PickleDataset(self.data_dir, self.file_2_label, files_list=self.test_files)
+        if self.raw_audio:
+            self.train_data = SimpleAudioDataset(self.data_dir, self.file_2_label, files_list=self.train_files)
+            self.val_data = SimpleAudioDataset(self.data_dir, self.file_2_label, files_list=self.val_files)
+            self.test_data = SimpleAudioDataset(self.data_dir, self.file_2_label, files_list=self.test_files)
+        else:
+            self.train_data = PickleDataset(self.data_dir, self.file_2_label, files_list=self.train_files)
+            self.val_data = PickleDataset(self.data_dir, self.file_2_label, files_list=self.val_files)
+            self.test_data = PickleDataset(self.data_dir, self.file_2_label, files_list=self.test_files)
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         return DataLoader(
@@ -108,6 +153,14 @@ class CustomDataModule(LightningDataModule):
         )
 
     def test_dataloader(self) -> EVAL_DATALOADERS:
+        return DataLoader(
+            self.test_data,
+            shuffle=False,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers
+        )
+
+    def predict_dataloader(self) -> EVAL_DATALOADERS:
         return DataLoader(
             self.test_data,
             shuffle=False,

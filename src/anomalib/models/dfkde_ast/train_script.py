@@ -1,10 +1,12 @@
+from pathlib import Path
 
+import torch
 from pytorch_lightning import Trainer
 
 from anomalib.config import get_configurable_parameters
 
 from anomalib.models import get_model
-from anomalib.utils.callbacks import get_callbacks
+from anomalib.utils.callbacks import get_callbacks, LoadModelCallback
 import pandas as pd
 
 
@@ -18,7 +20,6 @@ def get_annotated_train_df(all_df, test_df):
 
 def fit():
 
-    MODEL = "padim"  # 'padim', 'cflow', 'stfpm', 'ganomaly', 'dfkde', 'patchcore'
     CONFIG_PATH = "config.yaml"
     # with open(file=CONFIG_PATH, mode="r", encoding="utf-8") as file:
     #     print(file.read())
@@ -32,6 +33,7 @@ def fit():
     from data_ast import CustomDataModule
 
     data_dir = "/Users/christof/Documents/papers/sound/audio_data_simulation/ast_features/30_seconds_split"
+    audio_data_dir = "/Users/christof/Documents/papers/sound/audio_data_simulation/real_split_audio/30_seconds_split"
     test_data_file = "/Users/christof/Documents/papers/sound/data/test_set.csv"
     all_data_file = "/Users/christof/Documents/papers/sound/annotation_30_seconds_split.csv"
 
@@ -44,35 +46,50 @@ def fit():
     all_data_df = pd.read_csv(all_data_file)
     test_data_df = pd.read_csv(test_data_file)
     df_train_only_blank, df_train_only_whoop = get_annotated_train_df(all_data_df, test_data_df)
-    train_list = df_train_only_blank["names"].tolist()[:200]
-    val_list = df_train_only_blank["names"].tolist()[200:] + df_train_only_whoop["names"].tolist()
-    test_list = test_data_df["names"].tolist()
-    # train_list, val_list, test_list = all_data_df["names"].tolist(), all_data_df["names"].tolist(), all_data_df["names"].tolist()
+    # train_list = df_train_only_blank["names"].tolist()[:200]
+    # val_list = df_train_only_blank["names"].tolist()[200:] + df_train_only_whoop["names"].tolist()
+    # test_list = test_data_df["names"].tolist()
+    data = all_data_df["names"].tolist()
+    train_list, val_list, test_list = data, data, data
 
     file_2_label = dict(zip(all_data_df["names"], all_data_df["annotation_label"]))
 
-    datamodule = CustomDataModule(batch_size=32, data_dir=data_dir, file_2_label=file_2_label, train_files=train_list, val_files=val_list, test_files=test_list)
-
+    datamodule = CustomDataModule(batch_size=16, data_dir=data_dir, file_2_label=file_2_label, train_files=train_list,
+                                  val_files=val_list, test_files=test_list, raw_audio=False)
 
     # start training
     trainer = Trainer(**config.trainer, callbacks=callbacks)
     trainer.fit(model=model, datamodule=datamodule)
-    test_results1 = trainer.test(model=model, datamodule=datamodule)
-    print(trainer.checkpoint_callback.best_model_path)
-    print(test_results1)
+    test_results1 = trainer.predict(model=model, datamodule=datamodule)
 
-    # load saved model
-    # trainer2 = None
-    # output_path = Path(config["project"]["path"])
-    # model_path = output_path / "weights" / "lightning" / "model.ckpt"
-    # # config.trainer.accumulate_grad_batches = 0
-    # model = get_model(config)
-    # callbacks = get_callbacks(config)
-    # trainer2 = Trainer(**config.trainer, callbacks=callbacks)
-    # load_model_callback = LoadModelCallback(weights_path=model_path)
-    # trainer2.callbacks.insert(0, load_model_callback)
-    # test_results2 = trainer2.test(model=model, datamodule=datamodule)
+    true_labels = []
+    pred_labels = []
+    for i in test_results1:
+        pred_labels.extend(i["pred_labels"])
+        true_labels.extend(i["label"])
+
+    print(trainer.checkpoint_callback.best_model_path)
+
+    output_path = Path(config["project"]["path"])
+    model_path = output_path / "weights" / "lightning" / "model.ckpt"
+    # config.trainer.accumulate_grad_batches = 0
+    model = get_model(config)
+    callbacks = get_callbacks(config)
+    trainer2 = Trainer(**config.trainer, callbacks=callbacks)
+    # trainer2.fit(model=model, datamodule=datamodule)
+
+    load_model_callback = LoadModelCallback(weights_path=model_path)
+    trainer2.callbacks.insert(0, load_model_callback)
+    test_results2 = trainer2.predict(model=model, datamodule=datamodule)
+    pred_labels2 = []
+    for i in test_results2:
+        pred_labels2.extend(i["pred_labels"])
+
+    pred_labels = [int(i.item()) for i in pred_labels]
+    pred_labels2 = [int(i.item()) for i in pred_labels2]
+    true_labels = [int(i.item()) for i in true_labels]
+    return pred_labels, pred_labels2, true_labels
 
 
 if __name__ == '__main__':
-    fit()
+    l1, l2, t = fit()

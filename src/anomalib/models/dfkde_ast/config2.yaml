@@ -24,7 +24,7 @@ model:
   layers:
     - layer4
   pre_trained: true
-  skip_encoding: true
+  skip_encoding: false
   sampling_rate: 16000
   # density estimation params
   n_pca_components: 16

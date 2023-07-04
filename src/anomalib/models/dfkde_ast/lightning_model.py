@@ -39,6 +39,7 @@ class DfkdeAst(AnomalyModule):
     def __init__(
         self,
         sampling_rate: int = 16000,
+        skip_encoding: bool = True,
         n_pca_components: int = 16,
         feature_scaling_method: FeatureScalingMethod = FeatureScalingMethod.SCALE,
         max_training_points: int = 40000,
@@ -47,6 +48,7 @@ class DfkdeAst(AnomalyModule):
 
         self.model = DfkdeAstModel(
             sampling_rate=sampling_rate,
+            skip_encoding=skip_encoding,
             n_pca_components=n_pca_components,
             feature_scaling_method=feature_scaling_method,
             max_training_points=max_training_points,
@@ -115,6 +117,7 @@ class DfkdeAstLightning(DfkdeAst):
     def __init__(self, hparams: DictConfig | ListConfig) -> None:
         super().__init__(
             sampling_rate=hparams.model.sampling_rate,
+            skip_encoding=hparams.model.skip_encoding,
             n_pca_components=hparams.model.n_pca_components,
             feature_scaling_method=FeatureScalingMethod(hparams.model.feature_scaling_method),
             max_training_points=hparams.model.max_training_points,

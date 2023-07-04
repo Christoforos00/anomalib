@@ -39,6 +39,7 @@ class DfkdeAstModel(nn.Module):
     def __init__(
             self,
             sampling_rate: int = 16000,
+            skip_encoding: bool = True,
             n_pca_components: int = 16,
             feature_scaling_method: FeatureScalingMethod = FeatureScalingMethod.SCALE,
             max_training_points: int = 40000,
@@ -50,17 +51,21 @@ class DfkdeAstModel(nn.Module):
 
         self.sampling_rate = sampling_rate
         self.device = get_device()
-        self.processor_ = AutoProcessor.from_pretrained("MIT/ast-finetuned-audioset-10-10-0.4593")
-        self.feature_extractor = ASTModel.from_pretrained("MIT/ast-finetuned-audioset-10-10-0.4593").eval()
-        self.feature_extractor = self.feature_extractor.to(self.device)
-
-        # self.feature_extractor = FeatureExtractor(backbone=backbone, pre_trained=pre_trained, layers=layers).eval()
+        self.skip_encoding = skip_encoding
+        if not self.skip_encoding:
+            self.load_model()
 
         self.classifier = KDEClassifier(
             n_pca_components=n_pca_components,
             feature_scaling_method=feature_scaling_method,
             max_training_points=max_training_points,
         )
+
+    def load_model(self):
+        self.skip_encoding = False
+        self.processor_ = AutoProcessor.from_pretrained("MIT/ast-finetuned-audioset-10-10-0.4593")
+        self.feature_extractor = ASTModel.from_pretrained("MIT/ast-finetuned-audioset-10-10-0.4593").eval()
+        self.feature_extractor = self.feature_extractor.to(self.device)
 
     def get_features(self, batch: Tensor) -> Tensor:
         """Extract features from the pretrained network.
@@ -101,7 +106,11 @@ class DfkdeAstModel(nn.Module):
         """
 
         # 1. apply feature extraction
-        features = self.get_features(batch)
+        if self.skip_encoding:
+            features = batch
+        else:
+            features = self.get_features(batch)
+
         if self.training:
             return features
 
