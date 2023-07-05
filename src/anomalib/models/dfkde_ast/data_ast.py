@@ -131,10 +131,15 @@ class CustomDataModule(LightningDataModule):
             self.train_data = SimpleAudioDataset(self.data_dir, self.file_2_label, files_list=self.train_files)
             self.val_data = SimpleAudioDataset(self.data_dir, self.file_2_label, files_list=self.val_files)
             self.test_data = SimpleAudioDataset(self.data_dir, self.file_2_label, files_list=self.test_files)
+            self.predict_data = SimpleAudioDataset(self.data_dir, self.file_2_label,
+                                                   files_list=self.train_files + self.val_files + self.test_files)
         else:
             self.train_data = PickleDataset(self.data_dir, self.file_2_label, files_list=self.train_files)
             self.val_data = PickleDataset(self.data_dir, self.file_2_label, files_list=self.val_files)
             self.test_data = PickleDataset(self.data_dir, self.file_2_label, files_list=self.test_files)
+            self.predict_data = PickleDataset(self.data_dir, self.file_2_label,
+                                              files_list=self.train_files + self.val_files + self.test_files)
+
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         return DataLoader(
@@ -162,7 +167,7 @@ class CustomDataModule(LightningDataModule):
 
     def predict_dataloader(self) -> EVAL_DATALOADERS:
         return DataLoader(
-            self.train_data + self.val_data + self.test_data,
+            self.predict_data,
             shuffle=False,
             batch_size=self.batch_size,
             num_workers=self.num_workers
