@@ -162,7 +162,7 @@ class CustomDataModule(LightningDataModule):
 
     def predict_dataloader(self) -> EVAL_DATALOADERS:
         return DataLoader(
-            self.test_data,
+            self.train_data + self.val_data + self.test_data,
             shuffle=False,
             batch_size=self.batch_size,
             num_workers=self.num_workers
