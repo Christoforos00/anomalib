@@ -66,6 +66,7 @@ class PickleDataset(LightningDataModule):
         with open(file_path, "rb") as input_file:
             features = CPU_Unpickler(input_file).load()
         label = self.file_2_label[file_name]
+        print(features.shape)
         item = {"image": features, "label": label, "file_name": file_name}
         return item
 
