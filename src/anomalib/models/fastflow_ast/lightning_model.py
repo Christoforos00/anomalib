@@ -60,7 +60,7 @@ class FastflowAst(AnomalyModule):
             STEP_OUTPUT: Dictionary containing the loss value.
         """
         del args, kwargs  # These variables are not used.
-
+        print(batch["image"].shape)
         hidden_variables, jacobians = self.model(batch["image"])
         loss = self.loss(hidden_variables, jacobians)
         self.log("train_loss", loss.item(), on_epoch=True, prog_bar=True, logger=True)
