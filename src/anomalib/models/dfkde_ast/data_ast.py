@@ -100,7 +100,7 @@ class PickleDataset(LightningDataModule):
         if features.dim() == 2:
             device = features.device
             features = mono_to_color(features.detach().cpu().numpy())
-            features = torch.tensor(features, dtype=torch.float32).transpose((2, 0, 1)).to(device)
+            features = torch.tensor(features, dtype=torch.float32).permute(2, 0, 1).to(device)
         label = self.file_2_label[file_name]
         item = {"image": features, "label": label, "file_name": file_name}
         return item
