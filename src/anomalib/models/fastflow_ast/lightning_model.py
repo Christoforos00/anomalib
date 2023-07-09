@@ -12,8 +12,8 @@ from pytorch_lightning.utilities.types import STEP_OUTPUT
 from torch import Tensor, optim
 
 from anomalib.models.components import AnomalyModule
-from anomalib.models.fastflow.loss import FastflowLoss
-from anomalib.models.fastflow.torch_model import FastflowModel
+from anomalib.models.fastflow_ast.loss import FastflowAstLoss
+from anomalib.models.fastflow_ast.torch_model import FastflowAstModel
 
 
 class FastflowAst(AnomalyModule):
@@ -39,7 +39,7 @@ class FastflowAst(AnomalyModule):
     ) -> None:
         super().__init__()
 
-        self.model = FastflowModel(
+        self.model = FastflowAstModel(
             input_size=input_size,
             backbone=backbone,
             pre_trained=pre_trained,
@@ -47,7 +47,7 @@ class FastflowAst(AnomalyModule):
             conv3x3_only=conv3x3_only,
             hidden_ratio=hidden_ratio,
         )
-        self.loss = FastflowLoss()
+        self.loss = FastflowAstLoss()
 
     def training_step(self, batch: dict[str, str | Tensor], *args, **kwargs) -> STEP_OUTPUT:
         """Forward-pass input and return the loss.

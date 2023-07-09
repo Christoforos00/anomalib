@@ -21,7 +21,7 @@ from timm.models.vision_transformer import VisionTransformer
 from torch import Tensor, nn
 
 from anomalib.models.components.flow import AllInOneBlock
-from anomalib.models.fastflow.anomaly_map import AnomalyMapGenerator
+from anomalib.models.fastflow_ast.anomaly_map import AnomalyMapGenerator
 
 
 def subnet_conv_func(kernel_size: int, hidden_ratio: float) -> Callable:
