@@ -66,7 +66,6 @@ class PickleDataset(LightningDataModule):
         with open(file_path, "rb") as input_file:
             features = CPU_Unpickler(input_file).load()
         label = self.file_2_label[file_name]
-        print(features.shape)
         item = {"image": features, "label": label, "file_name": file_name}
         return item
 
@@ -140,7 +139,6 @@ class CustomDataModule(LightningDataModule):
             self.test_data = PickleDataset(self.data_dir, self.file_2_label, files_list=self.test_files)
             self.predict_data = PickleDataset(self.data_dir, self.file_2_label,
                                               files_list=self.train_files + self.val_files + self.test_files)
-
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         return DataLoader(
