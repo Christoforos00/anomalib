@@ -43,6 +43,38 @@ def resample_if_necessary(signal, sample_rate, target_sample_rate):
     return signal
 
 
+def mono_to_color(X, eps=1e-6, mean=None, std=None):
+    """
+    Converts a one channel array to a 3 channel one in [0, 255]
+    Arguments:
+        X {numpy array [H x W]} -- 2D array to convert
+    Keyword Arguments:
+        eps {float} -- To avoid dividing by 0 (default: {1e-6})
+        mean {None or np array} -- Mean for normalization (default: {None})
+        std {None or np array} -- Std for normalization (default: {None})
+    Returns:
+        numpy array [3 x H x W] -- RGB numpy array
+    """
+    X = np.stack([X, X, X], axis=-1)
+
+    # Standardize
+    mean = mean or X.mean()
+    std = std or X.std()
+    X = (X - mean) / (std + eps)
+
+    # Normalize to [0, 255]
+    _min, _max = X.min(), X.max()
+
+    if (_max - _min) > eps:
+        V = np.clip(X, _min, _max)
+        V = 255 * (V - _min) / (_max - _min)
+        V = V.astype(np.uint8)
+    else:
+        V = np.zeros_like(X, dtype=np.uint8)
+
+    return V
+
+
 class PickleDataset(LightningDataModule):
 
     def __init__(self, data_dir, file_2_label, files_list=None):
@@ -66,7 +98,9 @@ class PickleDataset(LightningDataModule):
         with open(file_path, "rb") as input_file:
             features = CPU_Unpickler(input_file).load()
         if features.dim() == 2:
-            features = features.unsqueeze(0)
+            device = features.device
+            features = mono_to_color(features.detach().cpu().numpy())
+            features = torch.tensor(features, dtype=torch.float32).to(device)
         label = self.file_2_label[file_name]
         item = {"image": features, "label": label, "file_name": file_name}
         return item
