@@ -123,7 +123,7 @@ class FastflowAstModel(nn.Module):
         self.input_size = input_size
 
         if backbone in ("cait_m48_448", "deit_base_distilled_patch16_384"):
-            self.feature_extractor = timm.create_model(backbone, pretrained=pre_trained)
+            self.feature_extractor = timm.create_model(backbone, pretrained=pre_trained, in_chans=1)
             channels = [768]
             scales = [16]
         elif backbone in ("resnet18", "wide_resnet50_2"):
@@ -131,7 +131,8 @@ class FastflowAstModel(nn.Module):
                 backbone,
                 pretrained=pre_trained,
                 features_only=True,
-                out_indices=[1, 2, 3]
+                out_indices=[1, 2, 3],
+                in_chans=1
             )
             channels = self.feature_extractor.feature_info.channels()
             scales = self.feature_extractor.feature_info.reduction()
