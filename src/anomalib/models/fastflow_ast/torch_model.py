@@ -119,7 +119,7 @@ class FastflowAstModel(nn.Module):
         hidden_ratio: float = 1.0,
     ) -> None:
         super().__init__()
-
+        input_size = (128, 1280)
         self.input_size = input_size
 
         if backbone in ("cait_m48_448", "deit_base_distilled_patch16_384"):
@@ -215,7 +215,7 @@ class FastflowAstModel(nn.Module):
         Returns:
             list[Tensor]: List of features.
         """
-        features = self.feature_extractor(input_tensor)
+        features = self.feature_extractor(input_tensor[:,:,:,:1280])
         features = [self.norms[i](feature) for i, feature in enumerate(features)]
         return features
 
